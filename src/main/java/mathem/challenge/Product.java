@@ -102,12 +102,13 @@ public class Product {
      * constraints
      */
     public boolean isValid() {
-        return productType.equals(ProductType.NORMAL)
+        return (productType.equals(ProductType.NORMAL)
             || (productType.equals(ProductType.EXTERNAL)
                 && daysInAdvance >= 5)
             || (productType.equals(ProductType.TEMPORARY)
                 && Collections.disjoint(deliveryDays,
-                   EnumSet.range(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)));
+                   EnumSet.range(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY))))
+            && !deliveryDays.isEmpty();
     }
 
     public UUID getProductId() {
