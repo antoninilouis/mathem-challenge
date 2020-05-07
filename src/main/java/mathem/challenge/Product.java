@@ -2,6 +2,7 @@ package mathem.challenge;
 
 import java.io.UnsupportedEncodingException;
 import java.time.DayOfWeek;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.UUID;
 
@@ -93,6 +94,20 @@ public class Product {
             e.printStackTrace();
             return null;
         }
+    }
+
+    /**
+     * Validates the constraints of a product
+     * @return a boolean value indicatinf the validity of the product
+     * constraints
+     */
+    public boolean isValid() {
+        return productType.equals(ProductType.NORMAL)
+            || (productType.equals(ProductType.EXTERNAL)
+                && daysInAdvance >= 5)
+            || (productType.equals(ProductType.TEMPORARY)
+                && Collections.disjoint(deliveryDays,
+                   EnumSet.range(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)));
     }
 
     public UUID getProductId() {

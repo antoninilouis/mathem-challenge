@@ -1,7 +1,10 @@
 package mathem.challenge;
 
-// Also include a hard-coded definition for “green” (environment-friendly) delivery dates. This could
-// be as simple as “all Wednesdays” or “date 5, 15 and 25 each month”.
+import java.time.DayOfWeek;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.Collection;
+import java.util.EnumSet;
 
 /**
  * - A delivery date is not valid if a product can't be delivered on that
@@ -16,6 +19,29 @@ package mathem.challenge;
  * should just be sorted ascending.
  */
 public class App {
+    private static final EnumSet<DayOfWeek> greenDays; 
+
+    // temporary definition for “green” (environment-friendly) delivery dates
+    // could be replaced by specific days of months
+    static {
+        greenDays = EnumSet.range(DayOfWeek.FRIDAY, DayOfWeek.SUNDAY);
+    }
+
     public static void main(String[] args) {
+    }
+
+    /**
+     * Return the available delivery dates for the upcoming 14 days.
+     * Calculations are made from the current date when code runs.
+     * @param postcode - the postcal code for the delivery
+     * @param products - the list of products to deliver
+     * @return the available delivery dates for the upcoming 14 days.
+     */
+    public static void listDeliveryDates(String postcode,
+                                         Collection<Product> products) {
+        // date-time with an offset from UTC/Greenwich in the ISO-8601
+        OffsetDateTime dateTime = OffsetDateTime.now(ZoneId.systemDefault());
+
+        // Filter the valid products
     }
 }
