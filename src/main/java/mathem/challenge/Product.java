@@ -94,4 +94,24 @@ public class Product {
             return null;
         }
     }
+
+    public UUID getProductId() {
+        return this.productId;
+    }
+
+    public String getProductName() {
+        return this.productName;
+    }
+
+    public ProductType getProductType() {
+        return this.productType;
+    }
+
+    public EnumSet<DayOfWeek> getDeliveryDays() {
+        return this.deliveryDays;
+    }
+
+    public int getDaysInAdvance() {
+        return this.daysInAdvance;
+    }
 }

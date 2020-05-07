@@ -17,6 +17,5 @@ package mathem.challenge;
  */
 public class App {
     public static void main(String[] args) {
-        Product p1 = Product.create("p1");
     }
 }
