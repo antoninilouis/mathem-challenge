@@ -28,13 +28,11 @@ public class Product {
      * days in advance constraint.
      * @param productId - the UUID (type 3) of the product
      * @param productName - the name of the product
-     * @param productType - the type of the product
      */
-    private Product(UUID productId, String productName,
-                    ProductType productType) {
+    private Product(UUID productId, String productName) {
         this.productId = productId;
         this.productName = productName;
-        this.productType = productType;
+        this.productType = ProductType.NORMAL;
         this.deliveryDays = EnumSet.allOf(DayOfWeek.class);
         this.daysInAdvance = 0;
     };
@@ -61,15 +59,14 @@ public class Product {
     /**
      * Static factory method for products with default constraints
      * @param name - the name of the product
-     * @param productType - the type of the product
      * @return an object of class Product initialized by the constructor for
      * Product objects with all deliveryDays and default
      */
-    public static Product create(String name, ProductType productType) {
+    public static Product create(String name) {
         try {
             byte[] bytes = (MATHEM_NAMESPACE + name).getBytes("UTF-8");
             UUID uuid = UUID.nameUUIDFromBytes(bytes);
-            return new Product(uuid, name, productType);
+            return new Product(uuid, name);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             return null;

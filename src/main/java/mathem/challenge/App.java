@@ -1,6 +1,5 @@
 package mathem.challenge;
 
-
 // Also include a hard-coded definition for “green” (environment-friendly) delivery dates. This could
 // be as simple as “all Wednesdays” or “date 5, 15 and 25 each month”.
 
@@ -18,5 +17,6 @@ package mathem.challenge;
  */
 public class App {
     public static void main(String[] args) {
+        Product p1 = Product.create("p1");
     }
 }
