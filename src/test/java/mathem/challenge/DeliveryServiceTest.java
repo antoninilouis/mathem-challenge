@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -18,6 +19,8 @@ import org.junit.Test;
 public class DeliveryServiceTest {
     private static final int FIRST_DELIVERY_SLOT = 9;
     private static final int LAST_DELIVERY_SLOT = 19;
+    private static final int MAX_DELIVERIES = 1
+    + LAST_DELIVERY_SLOT - FIRST_DELIVERY_SLOT;
 
     private static Object invokeMethod(Method m, Object t, Object... args) {
         Object res = null;
@@ -105,24 +108,67 @@ public class DeliveryServiceTest {
         }
     }
 
+    @Test public void testAddSlot() {
+        DeliveryService ds = new DeliveryService(LocalDate.now(),
+            LocalDate.now().plusDays(14));
+        try {
+            ds.addSlot(LocalDateTime.from(
+                LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0)));
+            ds.addSlot(LocalDateTime.from(
+                LocalDate.now().plusDays(1)
+                .atTime(FIRST_DELIVERY_SLOT + 1, 0)));
+            assertEquals(2, ds.countDeliveries(LocalDate.now().plusDays(1)));
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test public void testCountDeliveries() {
         DeliveryService ds = new DeliveryService(LocalDate.now(),
             LocalDate.now().plusDays(14));
         try {
-            Method method = ds.getClass().getDeclaredMethod("nextSlot",
-            new Class<?>[] { LocalDate.class });
-            method.setAccessible(true);
             ds.addSlot(LocalDateTime.from(
                 LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0)));
             assertEquals(0, ds.countDeliveries(LocalDate.now()));
             assertEquals(1, ds.countDeliveries(LocalDate.now().plusDays(1)));
-            for (int i = FIRST_DELIVERY_SLOT; i < LAST_DELIVERY_SLOT; i++) {
+            for (int i = FIRST_DELIVERY_SLOT; i <= LAST_DELIVERY_SLOT; i++) {
                 ds.addSlot(LocalDateTime.from(
                     LocalDate.now().plusDays(1).atTime(i, 0)));
             }
-            assertEquals(10, ds.countDeliveries(LocalDate.now().plusDays(1)));
-        } catch (NoSuchMethodException e) {
+            assertEquals(MAX_DELIVERIES,
+            ds.countDeliveries(LocalDate.now().plusDays(1)));
+        } catch (SecurityException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Test public void testScheduleDelivery() {
+        DeliveryService ds = new DeliveryService(LocalDate.now(),
+            LocalDate.now().plusDays(14));
+        try {
+            assertEquals(true, ds.scheduleDelivery(Arrays.asList(
+                new LocalDate[] { LocalDate.now().plusDays(1) })));
+            assertEquals(1, ds.countDeliveries());
+            for (int i = FIRST_DELIVERY_SLOT; i <= LAST_DELIVERY_SLOT; i++) {
+                ds.scheduleDelivery(Arrays.asList(
+                    new LocalDate[] { LocalDate.now().plusDays(1) }));
+            }
+            assertEquals(MAX_DELIVERIES, ds.countDeliveries());
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test public void testScheduleDeliveryOverLimit() {
+        DeliveryService ds = new DeliveryService(LocalDate.now(),
+            LocalDate.now().plusDays(14));
+        try {
+            for (int i = FIRST_DELIVERY_SLOT; i <= LAST_DELIVERY_SLOT + 5; 
+            i++) {
+                ds.scheduleDelivery(Arrays.asList(
+                    new LocalDate[] { LocalDate.now().plusDays(1) }));
+            }
+            assertEquals(MAX_DELIVERIES, ds.countDeliveries());
         } catch (SecurityException e) {
             e.printStackTrace();
         }

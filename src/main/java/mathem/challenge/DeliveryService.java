@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
 public class DeliveryService {
     private static final int FIRST_DELIVERY_SLOT = 9;
     private static final int LAST_DELIVERY_SLOT = 19;
+    private static final int MAX_DELIVERIES = 1
+    + LAST_DELIVERY_SLOT - FIRST_DELIVERY_SLOT;
     private Set<DeliverySlot> deliveries = new HashSet<DeliverySlot>();
     private LocalDate periodBegin;
     private LocalDate periodEnd;
@@ -89,6 +92,19 @@ public class DeliveryService {
         return deliveries.add(slot);
     }
 
+    public boolean addSlot(DeliverySlot slot) {
+        return deliveries.add(slot);
+    }
+
+    public boolean scheduleDelivery(List<LocalDate> possibleDays) {
+        for (LocalDate day : possibleDays) {
+            if (nextSlot(day).isPresent()) {
+                return addSlot(nextSlot(day).get());
+            }
+        }
+        return false;
+    }
+
     /**
      * Returns a DeliverySlot object representing the next available delivery
      * slot for the given day
@@ -98,6 +114,9 @@ public class DeliveryService {
      * slot for the given day or null if none was found
      */
     private Optional<DeliverySlot> nextSlot(LocalDate day) {
+        DeliverySlot slot = null;
+        if (countDeliveries(day) == MAX_DELIVERIES)
+            return Optional.empty();
         Instant begin = Instant.from(day.atStartOfDay()
         .atZone(ZoneId.systemDefault()));
         Instant end = Instant.from(day.plusDays(1).atStartOfDay()
@@ -105,7 +124,6 @@ public class DeliveryService {
         Set<DeliverySlot> dayDeliveries = deliveries.stream()
         .filter(deliverySlot -> deliverySlot.overlaps(begin, end))
         .collect(Collectors.toSet());
-        DeliverySlot slot = null;
         for (int i = FIRST_DELIVERY_SLOT; i <= LAST_DELIVERY_SLOT; i++) {
             slot = new DeliverySlot(LocalDateTime
             .from(day.atTime(i, 0).atZone(ZoneId.systemDefault())));
@@ -113,6 +131,10 @@ public class DeliveryService {
                 return Optional.of(slot);
         }
         return Optional.ofNullable(slot);
+    }
+
+    public int countDeliveries() {
+        return deliveries.size();
     }
 
     public int countDeliveries(LocalDate day) {
