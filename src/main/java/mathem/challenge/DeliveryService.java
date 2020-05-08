@@ -3,7 +3,6 @@ package mathem.challenge;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.Optional;
@@ -22,7 +21,7 @@ public class DeliveryService {
     }
 
     /**
-     * We overried Object.equals and Object.hashCode methods for DeliverySlot
+     * We override Object.equals and Object.hashCode methods for DeliverySlot
      * to enable efficient HashSet operations
      */
     private class DeliverySlot {
@@ -35,7 +34,8 @@ public class DeliveryService {
         }
 
         private DeliverySlot(LocalDateTime datetime) {
-            Instant begin = Instant.from(datetime.atZone(ZoneId.systemDefault()));
+            Instant begin = Instant.from(datetime
+            .atZone(ZoneId.systemDefault()));
             Instant end = Instant.from(datetime.plusHours(1)
             .atZone(ZoneId.systemDefault()));
             this.begin = begin;
@@ -65,6 +65,11 @@ public class DeliveryService {
         }
     }
 
+    public boolean addSlot(LocalDateTime ldt) {
+        DeliverySlot slot = new DeliverySlot(ldt);
+        return deliveries.add(slot);
+    }
+
     /**
      * Returns a DeliverySlot object representing the next available delivery
      * slot for the given day
@@ -74,15 +79,20 @@ public class DeliveryService {
      * slot for the given day or null if none was found
      */
     private Optional<DeliverySlot> nextSlot(LocalDate day) {
-        Instant begin = Instant.from(day.atStartOfDay().atZone(ZoneId.systemDefault()));
+        Instant begin = Instant.from(day.atStartOfDay()
+        .atZone(ZoneId.systemDefault()));
         Instant end = Instant.from(day.plusDays(1).atStartOfDay()
         .atZone(ZoneId.systemDefault()));
         Set<DeliverySlot> dayDeliveries = deliveries.stream()
         .filter(deliverySlot -> deliverySlot.overlaps(begin, end))
         .collect(Collectors.toSet());
-        DeliverySlot slot = new DeliverySlot(LocalDateTime
-        .from(day.atTime(8, 0).atZone(ZoneId.systemDefault())));
-        // if (!dayDeliveries.contains(slot))
+        DeliverySlot slot = null;
+        for (int i = 8; i < 20; i++) {
+            slot = new DeliverySlot(LocalDateTime
+            .from(day.atTime(i, 0).atZone(ZoneId.systemDefault())));
+            if (!dayDeliveries.contains(slot))
+                return Optional.of(slot);
+        }
         return Optional.ofNullable(slot);
     }
 }
