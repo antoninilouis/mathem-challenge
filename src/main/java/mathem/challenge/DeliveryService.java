@@ -1,13 +1,20 @@
 package mathem.challenge;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.HashSet;
+import java.time.ZoneOffset;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -16,11 +23,23 @@ import java.util.stream.Collectors;
  * available for each days of the delivery period.
  */
 public class DeliveryService {
+    private static final EnumSet<DayOfWeek> greenDays;
     private static final int FIRST_DELIVERY_SLOT = 9;
     private static final int LAST_DELIVERY_SLOT = 19;
     private static final int MAX_DELIVERIES = 1
     + LAST_DELIVERY_SLOT - FIRST_DELIVERY_SLOT;
-    private Set<DeliverySlot> deliveries = new HashSet<DeliverySlot>();
+    private SortedSet<DeliverySlot> deliveries =
+    new TreeSet<DeliverySlot>(new Comparator<DeliverySlot>() {
+        @Override public int compare(DeliverySlot o1, DeliverySlot o2) {
+            return o1.begin.compareTo(o2.begin);
+        }
+    });
+
+    // temporary definition for “green” (environment-friendly) delivery dates
+    // could be replaced by specific days of months
+    static {
+        greenDays = EnumSet.range(DayOfWeek.FRIDAY, DayOfWeek.SUNDAY);
+    }
 
     /**
      * We override Object.equals and Object.hashCode methods for DeliverySlot
@@ -159,5 +178,32 @@ public class DeliveryService {
             .systemDefault()).toInstant();
             return d.overlaps(begin, end);
         }, Collectors.toSet())).size();
+    }
+
+    public LinkedHashMap<UUID, OffsetDateTime> getSchedule() {
+        LinkedHashMap<UUID, OffsetDateTime> schedule = 
+        new LinkedHashMap<UUID, OffsetDateTime>();
+        TreeSet<DeliverySlot> greenDayFirstDeliveries =
+        new TreeSet<DeliverySlot>(new Comparator<DeliverySlot>() {
+            @Override public int compare(DeliverySlot o1, DeliverySlot o2) {
+                boolean isGrenDayO1 = greenDays.contains(LocalDate
+                .ofInstant(o1.begin, ZoneId.systemDefault()).getDayOfWeek());
+                boolean isGrenDayO2 = greenDays.contains(LocalDate
+                .ofInstant(o2.begin, ZoneId.systemDefault()).getDayOfWeek());
+                if (isGrenDayO1 && isGrenDayO2) {
+                    return 0;
+                } else if (isGrenDayO1) {
+                    return 1;
+                } else {
+                    return -1;
+                }
+            }
+        });
+        greenDayFirstDeliveries.addAll(deliveries);
+        for (DeliverySlot deliverySlot : deliveries) {
+            schedule.put(deliverySlot.productId,
+            deliverySlot.begin.atOffset(ZoneOffset.UTC));
+        }
+        return schedule;
     }
 }

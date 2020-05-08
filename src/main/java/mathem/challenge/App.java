@@ -2,30 +2,22 @@ package mathem.challenge;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.UUID;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import mathem.challenge.Product.ProductType;
 
-/**
- * The result should be sorted in priority order, with green delivery dates at
- * the top of the list if they are within the next 3 days, otherwise dates
- * should just be sorted ascending.
- */
 public class App {
-    private static final EnumSet<DayOfWeek> greenDays;
     private static final int PERIOD_LENGTH = 14;
     private DeliveryService deliveryService;
-
-    // temporary definition for “green” (environment-friendly) delivery dates
-    // could be replaced by specific days of months
-    static {
-        greenDays = EnumSet.range(DayOfWeek.FRIDAY, DayOfWeek.SUNDAY);
-    }
 
     public App(DeliveryService deliveryService) {
         this.deliveryService = deliveryService;
@@ -56,6 +48,10 @@ public class App {
      * - A delivery date is not good if a product must be ordered more days in
      *   advance than possible
      * 
+     * The result is sorted in priority order, with green delivery dates at
+     * the top of the list if they are within the next 3 days, otherwise dates
+     * are just be sorted ascending.
+     * 
      * @param postcode - the postcal code for the delivery
      * @param products - the list of products to deliver
      * @return the available delivery dates for the upcoming 14 days.
@@ -67,6 +63,8 @@ public class App {
             List<LocalDate> possibleDays = possibleDays(product);
             deliveryService.scheduleDelivery(possibleDays, product);
         }
+        LinkedHashMap<UUID, OffsetDateTime> schedule = deliveryService.getSchedule();
+        schedule.forEach((key, value) -> System.out.println(value));
     }
 
     private static List<Product> getValidProducts(List<Product> products) {
@@ -88,6 +86,8 @@ public class App {
         EnumSet<DayOfWeek> deliveryDays = product.getDeliveryDays();
         LocalDate d = LocalDate.now();
         ArrayList<LocalDate> possibleDays = new ArrayList<LocalDate>();
+        // Skip the current day as DeliveryService does not account for
+        // time of current day
         for (int i = 0; i < PERIOD_LENGTH; i++) {
             d = d.plusDays(1);
             if (deliveryDays.contains(d.getDayOfWeek()))
