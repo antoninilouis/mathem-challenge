@@ -4,4 +4,4 @@
 </p>
 
 # MatHem Challenge
-Welcome to official source repository for the MatHem delivery scheduler "À la française!". Bon appéti!
+Welcome to official source repository for the MatHem delivery scheduler "À la française!". Bon appétit!
