@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +36,15 @@ public class DeliveryService {
     private class DeliverySlot {
         private final Instant begin;
         private final Instant end;
+        private UUID productId;
+
+        public void setProductId(UUID productId) {
+            this.productId = productId;
+        }
+
+        public UUID getProductId() {
+            return this.productId;
+        }
 
         private DeliverySlot(Instant begin, Instant end) {
             this.begin = begin;
@@ -96,10 +106,20 @@ public class DeliveryService {
         return deliveries.add(slot);
     }
 
-    public boolean scheduleDelivery(List<LocalDate> possibleDays) {
+    /**
+     * Adds a new slot in place of a free slot found in the list of possible
+     * days provided
+     * @param possibleDays - the list of days to find free slots from
+     * @return a boolean value indicating if the delivery scheduling operation
+     * succeeded (true) or failed (false)
+     */
+    public boolean scheduleDelivery(List<LocalDate> possibleDays,
+                                    Product product) {
         for (LocalDate day : possibleDays) {
             if (nextSlot(day).isPresent()) {
-                return addSlot(nextSlot(day).get());
+                DeliverySlot slot = nextSlot(day).get();
+                slot.setProductId(product.getProductId());
+                return addSlot(slot);
             }
         }
         return false;

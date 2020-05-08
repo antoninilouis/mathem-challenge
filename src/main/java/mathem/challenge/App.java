@@ -2,7 +2,6 @@ package mathem.challenge;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,6 +19,7 @@ import mathem.challenge.Product.ProductType;
 public class App {
     private static final EnumSet<DayOfWeek> greenDays;
     private static final int PERIOD_LENGTH = 14;
+    private DeliveryService deliveryService;
 
     // temporary definition for “green” (environment-friendly) delivery dates
     // could be replaced by specific days of months
@@ -27,7 +27,15 @@ public class App {
         greenDays = EnumSet.range(DayOfWeek.FRIDAY, DayOfWeek.SUNDAY);
     }
 
+    public App(DeliveryService deliveryService) {
+        this.deliveryService = deliveryService;
+    }
+
     public static void main(String[] args) {
+        // The delivery service constructor arguments are deprecated
+        DeliveryService deliveryService = 
+            new DeliveryService(LocalDate.MIN, LocalDate.MAX);
+        App app = new App(deliveryService);
         Product[] products = new Product[] {
             Product.create("P1", ProductType.NORMAL,
                  EnumSet.allOf(DayOfWeek.class), 15),
@@ -38,7 +46,7 @@ public class App {
             Product.create("P4", ProductType.NORMAL,
                  EnumSet.allOf(DayOfWeek.class), 0),
         };
-        listDeliveryDates("12345", Arrays.asList(products));
+        app.listDeliveryDates("12345", Arrays.asList(products));
     }
 
     /**
@@ -54,11 +62,13 @@ public class App {
      * @param products - the list of products to deliver
      * @return the available delivery dates for the upcoming 14 days.
      */
-    public static void listDeliveryDates(String postcode,
+    public void listDeliveryDates(String postcode,
                                          Collection<Product> products) {
         products = getValidProducts(new ArrayList<Product>(products));
-        LocalDate beginDate = LocalDate.now(ZoneId.systemDefault());
-        LocalDate endDate = beginDate.plusDays(PERIOD_LENGTH);
+        for (Product product : products) {
+            List<LocalDate> possibleDays = possibleDays(product);
+            deliveryService.scheduleDelivery(possibleDays,product);
+        }
     }
 
     private static List<Product> getValidProducts(List<Product> products) {
@@ -69,24 +79,22 @@ public class App {
     /**
      * Returns a list of LocalDate within the delivery period where a delivery
      * for the product could happen if there is a delivery slot.
+     * @param product
+     * @return
      */
-    private static List<LocalDate> possibleDates(LocalDate date,
-                                                 Product product) {
+    private static List<LocalDate> possibleDays(Product product) {
         int daysInAdvance = product.getDaysInAdvance();
-
         if (daysInAdvance > PERIOD_LENGTH - 1) {
-            System.out.println("Product has to be delivered later.");
             return new ArrayList<LocalDate>();
         }
-
         EnumSet<DayOfWeek> deliveryDays = product.getDeliveryDays();
-        DayOfWeek d = date.getDayOfWeek();
-        // PERIOD_LENGTH daysInAdvance
-        // for (int i = d.ordinal(); i < 7; i++) {
-        //     if (deliveryDays.contains(d))
-        //         return i;
-        //     d = d.plus(1);
-        // }
-        return new ArrayList<LocalDate>();
+        LocalDate d = LocalDate.now();
+        ArrayList<LocalDate> possibleDays = new ArrayList<LocalDate>();
+        for (int i = 0; i < PERIOD_LENGTH; i++) {
+            d = d.plusDays(1);
+            if (deliveryDays.contains(d.getDayOfWeek()))
+                possibleDays.add(d);
+        }
+        return possibleDays;
     }
 }

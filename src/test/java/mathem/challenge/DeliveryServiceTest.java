@@ -9,12 +9,16 @@ import static org.junit.Assert.assertTrue;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Optional;
 
 import org.junit.Test;
+
+import mathem.challenge.Product.ProductType;
 
 public class DeliveryServiceTest {
     private static final int FIRST_DELIVERY_SLOT = 9;
@@ -146,12 +150,14 @@ public class DeliveryServiceTest {
         DeliveryService ds = new DeliveryService(LocalDate.now(),
             LocalDate.now().plusDays(14));
         try {
+            Product dummy = Product.create("P1", ProductType.NORMAL,
+                 EnumSet.allOf(DayOfWeek.class), 15);
             assertEquals(true, ds.scheduleDelivery(Arrays.asList(
-                new LocalDate[] { LocalDate.now().plusDays(1) })));
+                new LocalDate[] { LocalDate.now().plusDays(1) }), dummy));
             assertEquals(1, ds.countDeliveries());
             for (int i = FIRST_DELIVERY_SLOT; i <= LAST_DELIVERY_SLOT; i++) {
                 ds.scheduleDelivery(Arrays.asList(
-                    new LocalDate[] { LocalDate.now().plusDays(1) }));
+                    new LocalDate[] { LocalDate.now().plusDays(1) }), dummy);
             }
             assertEquals(MAX_DELIVERIES, ds.countDeliveries());
         } catch (SecurityException e) {
@@ -165,8 +171,10 @@ public class DeliveryServiceTest {
         try {
             for (int i = FIRST_DELIVERY_SLOT; i <= LAST_DELIVERY_SLOT + 5; 
             i++) {
+                Product dummy = Product.create("P1", ProductType.NORMAL,
+                EnumSet.allOf(DayOfWeek.class), 15);
                 ds.scheduleDelivery(Arrays.asList(
-                    new LocalDate[] { LocalDate.now().plusDays(1) }));
+                    new LocalDate[] { LocalDate.now().plusDays(1) }), dummy);
             }
             assertEquals(MAX_DELIVERIES, ds.countDeliveries());
         } catch (SecurityException e) {
