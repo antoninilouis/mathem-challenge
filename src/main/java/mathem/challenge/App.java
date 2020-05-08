@@ -10,8 +10,11 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.UUID;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import mathem.challenge.Product.ProductType;
 
@@ -64,7 +67,22 @@ public class App {
             deliveryService.scheduleDelivery(possibleDays, product);
         }
         LinkedHashMap<UUID, OffsetDateTime> schedule = deliveryService.getSchedule();
-        schedule.forEach((key, value) -> System.out.println(value));
+        JsonArray arr = new JsonArray();
+        schedule.forEach((key, value) -> {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("postalCode", postcode);
+            obj.addProperty("deliveryDate", value.toString());
+            obj.addProperty("isGreenDelivery", "false");
+            arr.add(obj);
+        });
+        Gson gson = new Gson();
+        System.out.println(gson.toJson(arr));
+
+        /**
+         * - get "isGreen" info from each DeliverySlot (in DeliveryService)
+         * - correct the sorting (earliest to latest to the opposite)
+         * - add tests for the sorting (latest date)
+         */
     }
 
     private static List<Product> getValidProducts(List<Product> products) {

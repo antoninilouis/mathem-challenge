@@ -31,7 +31,7 @@ public class DeliveryService {
     private SortedSet<DeliverySlot> deliveries =
     new TreeSet<DeliverySlot>(new Comparator<DeliverySlot>() {
         @Override public int compare(DeliverySlot o1, DeliverySlot o2) {
-            return o1.begin.compareTo(o2.begin);
+            return - o1.begin.compareTo(o2.begin);
         }
     });
 
@@ -48,6 +48,7 @@ public class DeliveryService {
     private class DeliverySlot {
         private final Instant begin;
         private final Instant end;
+        private final boolean isGreen;
         private UUID productId;
 
         public void setProductId(UUID productId) {
@@ -58,9 +59,15 @@ public class DeliveryService {
             return this.productId;
         }
 
+        public boolean getIsGreen() {
+            return this.isGreen;
+        }
+
         private DeliverySlot(Instant begin, Instant end) {
             this.begin = begin;
             this.end = end;
+            this.isGreen = greenDays.contains(LocalDate
+            .ofInstant(this.begin, ZoneId.systemDefault()).getDayOfWeek());
         }
 
         /**
@@ -76,6 +83,8 @@ public class DeliveryService {
             .atZone(ZoneId.systemDefault()));
             this.begin = begin;
             this.end = end;
+            this.isGreen = greenDays.contains(LocalDate
+            .ofInstant(this.begin, ZoneId.systemDefault()).getDayOfWeek());
         }
 
         private boolean overlaps(Instant begin, Instant end) {
@@ -186,13 +195,9 @@ public class DeliveryService {
         TreeSet<DeliverySlot> greenDayFirstDeliveries =
         new TreeSet<DeliverySlot>(new Comparator<DeliverySlot>() {
             @Override public int compare(DeliverySlot o1, DeliverySlot o2) {
-                boolean isGrenDayO1 = greenDays.contains(LocalDate
-                .ofInstant(o1.begin, ZoneId.systemDefault()).getDayOfWeek());
-                boolean isGrenDayO2 = greenDays.contains(LocalDate
-                .ofInstant(o2.begin, ZoneId.systemDefault()).getDayOfWeek());
-                if (isGrenDayO1 && isGrenDayO2) {
+                if (o1.isGreen && o2.isGreen) {
                     return 0;
-                } else if (isGrenDayO1) {
+                } else if (o1.isGreen) {
                     return 1;
                 } else {
                     return -1;
