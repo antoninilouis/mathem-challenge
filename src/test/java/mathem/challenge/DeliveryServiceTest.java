@@ -66,8 +66,7 @@ public class DeliveryServiceTest {
     }
 
     @Test public void testDeliveryServiceBasic() {
-        DeliveryService ds = new DeliveryService(LocalDate.now(),
-            LocalDate.now().plusDays(14));
+        DeliveryService ds = new DeliveryService();
         try {
             Method method = ds.getClass().getDeclaredMethod("nextSlot",
             new Class<?>[] { LocalDate.class });
@@ -85,8 +84,7 @@ public class DeliveryServiceTest {
     }
 
     @Test public void testDeliveryServiceMedium() {
-        DeliveryService ds = new DeliveryService(LocalDate.now(),
-            LocalDate.now().plusDays(14));
+        DeliveryService ds = new DeliveryService();
         try {
             Method nextSlot = ds.getClass().getDeclaredMethod("nextSlot",
             new Class<?>[] { LocalDate.class });
@@ -113,8 +111,7 @@ public class DeliveryServiceTest {
     }
 
     @Test public void testAddSlot() {
-        DeliveryService ds = new DeliveryService(LocalDate.now(),
-            LocalDate.now().plusDays(14));
+        DeliveryService ds = new DeliveryService();
         try {
             ds.addSlot(LocalDateTime.from(
                 LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0)));
@@ -128,8 +125,7 @@ public class DeliveryServiceTest {
     }
 
     @Test public void testCountDeliveries() {
-        DeliveryService ds = new DeliveryService(LocalDate.now(),
-            LocalDate.now().plusDays(14));
+        DeliveryService ds = new DeliveryService();
         try {
             ds.addSlot(LocalDateTime.from(
                 LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0)));
@@ -147,8 +143,7 @@ public class DeliveryServiceTest {
     }
 
     @Test public void testScheduleDelivery() {
-        DeliveryService ds = new DeliveryService(LocalDate.now(),
-            LocalDate.now().plusDays(14));
+        DeliveryService ds = new DeliveryService();
         try {
             Product dummy = Product.create("P1", ProductType.NORMAL,
                  EnumSet.allOf(DayOfWeek.class), 15);
@@ -166,8 +161,7 @@ public class DeliveryServiceTest {
     }
 
     @Test public void testScheduleDeliveryOverLimit() {
-        DeliveryService ds = new DeliveryService(LocalDate.now(),
-            LocalDate.now().plusDays(14));
+        DeliveryService ds = new DeliveryService();
         try {
             for (int i = FIRST_DELIVERY_SLOT; i <= LAST_DELIVERY_SLOT + 5; 
             i++) {

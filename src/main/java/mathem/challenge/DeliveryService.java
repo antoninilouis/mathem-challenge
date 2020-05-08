@@ -21,13 +21,6 @@ public class DeliveryService {
     private static final int MAX_DELIVERIES = 1
     + LAST_DELIVERY_SLOT - FIRST_DELIVERY_SLOT;
     private Set<DeliverySlot> deliveries = new HashSet<DeliverySlot>();
-    private LocalDate periodBegin;
-    private LocalDate periodEnd;
-
-    public DeliveryService(LocalDate begin, LocalDate end) {
-        periodBegin = begin;
-        periodEnd = end;
-    }
 
     /**
      * We override Object.equals and Object.hashCode methods for DeliverySlot

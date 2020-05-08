@@ -32,9 +32,7 @@ public class App {
     }
 
     public static void main(String[] args) {
-        // The delivery service constructor arguments are deprecated
-        DeliveryService deliveryService = 
-            new DeliveryService(LocalDate.MIN, LocalDate.MAX);
+        DeliveryService deliveryService = new DeliveryService();
         App app = new App(deliveryService);
         Product[] products = new Product[] {
             Product.create("P1", ProductType.NORMAL,
@@ -67,7 +65,7 @@ public class App {
         products = getValidProducts(new ArrayList<Product>(products));
         for (Product product : products) {
             List<LocalDate> possibleDays = possibleDays(product);
-            deliveryService.scheduleDelivery(possibleDays,product);
+            deliveryService.scheduleDelivery(possibleDays, product);
         }
     }
 
