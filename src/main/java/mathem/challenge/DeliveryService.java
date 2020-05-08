@@ -14,10 +14,15 @@ import java.util.stream.Collectors;
  * available for each days of the delivery period.
  */
 public class DeliveryService {
+    private static final int FIRST_DELIVERY_SLOT = 9;
+    private static final int LAST_DELIVERY_SLOT = 19;
     private Set<DeliverySlot> deliveries = new HashSet<DeliverySlot>();
+    private LocalDate periodBegin;
+    private LocalDate periodEnd;
 
     public DeliveryService(LocalDate begin, LocalDate end) {
-
+        periodBegin = begin;
+        periodEnd = end;
     }
 
     /**
@@ -33,6 +38,12 @@ public class DeliveryService {
             this.end = end;
         }
 
+        /**
+         * The DeliverySlot is a class managed by the DeliverySchedule to
+         * represent a duration of time delimited by a beginning instant
+         * and an ending instant during which a delivery can occur within
+         * the DeliveryService schedule.
+         */
         private DeliverySlot(LocalDateTime datetime) {
             Instant begin = Instant.from(datetime
             .atZone(ZoneId.systemDefault()));
@@ -65,6 +76,14 @@ public class DeliveryService {
         }
     }
 
+    /**
+     * Create a new DeliverySlot object based on the ldt parameter and insert
+     * it into the DeliveryService set of deliveries
+     * @param ldt - the LocalDateTime object to define the created DeliverSlot
+     * beginning and end instants from
+     * @return a boolean value equal to true if the DeliverySlot was added to
+     * the set of deliveries.
+     */
     public boolean addSlot(LocalDateTime ldt) {
         DeliverySlot slot = new DeliverySlot(ldt);
         return deliveries.add(slot);
@@ -87,12 +106,23 @@ public class DeliveryService {
         .filter(deliverySlot -> deliverySlot.overlaps(begin, end))
         .collect(Collectors.toSet());
         DeliverySlot slot = null;
-        for (int i = 8; i < 20; i++) {
+        for (int i = FIRST_DELIVERY_SLOT; i <= LAST_DELIVERY_SLOT; i++) {
             slot = new DeliverySlot(LocalDateTime
             .from(day.atTime(i, 0).atZone(ZoneId.systemDefault())));
             if (!dayDeliveries.contains(slot))
                 return Optional.of(slot);
         }
         return Optional.ofNullable(slot);
+    }
+
+    public int countDeliveries(LocalDate day) {
+        return deliveries.stream().collect(Collectors.filtering(d -> 
+        {
+            Instant begin = day.atStartOfDay().atZone(ZoneId.systemDefault())
+            .toInstant();
+            Instant end = day.plusDays(1).atStartOfDay().atZone(ZoneId
+            .systemDefault()).toInstant();
+            return d.overlaps(begin, end);
+        }, Collectors.toSet())).size();
     }
 }

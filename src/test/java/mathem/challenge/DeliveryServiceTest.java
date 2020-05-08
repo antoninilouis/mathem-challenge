@@ -16,6 +16,9 @@ import java.util.Optional;
 import org.junit.Test;
 
 public class DeliveryServiceTest {
+    private static final int FIRST_DELIVERY_SLOT = 9;
+    private static final int LAST_DELIVERY_SLOT = 19;
+
     private static Object invokeMethod(Method m, Object t, Object... args) {
         Object res = null;
         try {
@@ -63,7 +66,7 @@ public class DeliveryServiceTest {
             new Class<?>[] { LocalDate.class });
             method.setAccessible(true);
             Object deliverySlot = createDeliverySlot(ds, LocalDateTime.from(
-                LocalDate.now().plusDays(1).atTime(8, 0)));
+                LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0)));
             Optional<?> o = (Optional<?>) invokeMethod(method, ds, LocalDate
             .now().plusDays(1));
             assertEquals(deliverySlot, o.get());
@@ -78,22 +81,46 @@ public class DeliveryServiceTest {
         DeliveryService ds = new DeliveryService(LocalDate.now(),
             LocalDate.now().plusDays(14));
         try {
-            Method method = ds.getClass().getDeclaredMethod("nextSlot",
+            Method nextSlot = ds.getClass().getDeclaredMethod("nextSlot",
             new Class<?>[] { LocalDate.class });
-            method.setAccessible(true);
+            nextSlot.setAccessible(true);
             Object deliverySlot = createDeliverySlot(ds, LocalDateTime.from(
-                LocalDate.now().plusDays(1).atTime(8, 0)));
+                LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0)));
             assertTrue(ds.addSlot(LocalDateTime.from(
-                LocalDate.now().plusDays(1).atTime(8, 0))));
+                LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0))));
             assertFalse(ds.addSlot(LocalDateTime.from(
-                LocalDate.now().plusDays(1).atTime(8, 0))));
-            Optional<?> o = (Optional<?>) invokeMethod(method, ds, LocalDate
+                LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0))));
+            Optional<?> o = (Optional<?>) invokeMethod(nextSlot, ds, LocalDate
             .now().plusDays(1));
             assertNotEquals(deliverySlot, o.get());
             assertNotNull(o.get());
             Object deliverySlot2 = createDeliverySlot(ds, LocalDateTime.from(
-                LocalDate.now().plusDays(1).atTime(9, 0)));
+                LocalDate.now().plusDays(1)
+                .atTime(FIRST_DELIVERY_SLOT + 1, 0)));
             assertEquals(deliverySlot2, o.get());
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test public void testCountDeliveries() {
+        DeliveryService ds = new DeliveryService(LocalDate.now(),
+            LocalDate.now().plusDays(14));
+        try {
+            Method method = ds.getClass().getDeclaredMethod("nextSlot",
+            new Class<?>[] { LocalDate.class });
+            method.setAccessible(true);
+            ds.addSlot(LocalDateTime.from(
+                LocalDate.now().plusDays(1).atTime(FIRST_DELIVERY_SLOT, 0)));
+            assertEquals(0, ds.countDeliveries(LocalDate.now()));
+            assertEquals(1, ds.countDeliveries(LocalDate.now().plusDays(1)));
+            for (int i = FIRST_DELIVERY_SLOT; i < LAST_DELIVERY_SLOT; i++) {
+                ds.addSlot(LocalDateTime.from(
+                    LocalDate.now().plusDays(1).atTime(i, 0)));
+            }
+            assertEquals(10, ds.countDeliveries(LocalDate.now().plusDays(1)));
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (SecurityException e) {
