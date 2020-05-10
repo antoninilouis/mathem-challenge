@@ -18,6 +18,8 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.javatuples.Pair;
+
 /**
  * We need a delivery service to keep track of which "delivery slots" are
  * available for each days of the delivery period.
@@ -31,12 +33,11 @@ public class DeliveryService {
     private SortedSet<DeliverySlot> deliveries =
     new TreeSet<DeliverySlot>(new Comparator<DeliverySlot>() {
         @Override public int compare(DeliverySlot o1, DeliverySlot o2) {
-            return - o1.begin.compareTo(o2.begin);
+            return o1.begin.compareTo(o2.begin);
         }
     });
 
-    // temporary definition for “green” (environment-friendly) delivery dates
-    // could be replaced by specific days of months
+    // Green days are defined as FRIDAY, SATURDAY and SUNDAY
     static {
         greenDays = EnumSet.range(DayOfWeek.FRIDAY, DayOfWeek.SUNDAY);
     }
@@ -189,25 +190,34 @@ public class DeliveryService {
         }, Collectors.toSet())).size();
     }
 
-    public LinkedHashMap<UUID, OffsetDateTime> getSchedule() {
-        LinkedHashMap<UUID, OffsetDateTime> schedule = 
-        new LinkedHashMap<UUID, OffsetDateTime>();
+    public LinkedHashMap<UUID, Pair<OffsetDateTime,Boolean>> getSchedule() {
+        LinkedHashMap<UUID, Pair<OffsetDateTime,Boolean>> schedule = 
+        new LinkedHashMap<UUID, Pair<OffsetDateTime,Boolean>>();
         TreeSet<DeliverySlot> greenDayFirstDeliveries =
         new TreeSet<DeliverySlot>(new Comparator<DeliverySlot>() {
             @Override public int compare(DeliverySlot o1, DeliverySlot o2) {
-                if (o1.isGreen && o2.isGreen) {
-                    return 0;
-                } else if (o1.isGreen) {
-                    return 1;
-                } else {
+                Instant greenLimit = LocalDate.now().plusDays(3).atStartOfDay()
+                .atZone(ZoneId.systemDefault()).toInstant();
+                boolean hasPriorityO1 = o1.isGreen
+                && o1.begin.isBefore(greenLimit);
+                boolean hasPriorityO2 = o2.isGreen 
+                && o2.begin.isBefore(greenLimit);
+                if (hasPriorityO1 && hasPriorityO2) {
+                    return o1.begin.compareTo(o2.begin);
+                } else if (hasPriorityO1) {
                     return -1;
+                } else {
+                    return 1;
                 }
             }
         });
         greenDayFirstDeliveries.addAll(deliveries);
-        for (DeliverySlot deliverySlot : deliveries) {
+        for (DeliverySlot deliverySlot : greenDayFirstDeliveries) {
             schedule.put(deliverySlot.productId,
-            deliverySlot.begin.atOffset(ZoneOffset.UTC));
+            new Pair<OffsetDateTime,Boolean>(
+                deliverySlot.begin.atOffset(ZoneOffset.UTC),
+                deliverySlot.isGreen)
+            );
         }
         return schedule;
     }

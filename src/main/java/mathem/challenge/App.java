@@ -16,6 +16,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import org.javatuples.Pair;
+
 import mathem.challenge.Product.ProductType;
 
 public class App {
@@ -37,8 +39,10 @@ public class App {
             Product.create("P3", ProductType.NORMAL,
                  EnumSet.allOf(DayOfWeek.class), 0),
             Product.create("P4", ProductType.NORMAL,
-                 EnumSet.allOf(DayOfWeek.class), 0),
-        };
+                 EnumSet.allOf(DayOfWeek.class), 6),
+            Product.create("P4", ProductType.NORMAL,
+                 EnumSet.allOf(DayOfWeek.class), 6),
+            };
         app.listDeliveryDates("12345", Arrays.asList(products));
     }
 
@@ -66,13 +70,14 @@ public class App {
             List<LocalDate> possibleDays = possibleDays(product);
             deliveryService.scheduleDelivery(possibleDays, product);
         }
-        LinkedHashMap<UUID, OffsetDateTime> schedule = deliveryService.getSchedule();
+        LinkedHashMap<UUID, Pair<OffsetDateTime,Boolean>> schedule = 
+        deliveryService.getSchedule();
         JsonArray arr = new JsonArray();
         schedule.forEach((key, value) -> {
             JsonObject obj = new JsonObject();
             obj.addProperty("postalCode", postcode);
-            obj.addProperty("deliveryDate", value.toString());
-            obj.addProperty("isGreenDelivery", "false");
+            obj.addProperty("deliveryDate", value.getValue0().toString());
+            obj.addProperty("isGreenDelivery", value.getValue1());
             arr.add(obj);
         });
         Gson gson = new Gson();
@@ -98,15 +103,15 @@ public class App {
      */
     private static List<LocalDate> possibleDays(Product product) {
         int daysInAdvance = product.getDaysInAdvance();
-        if (daysInAdvance > PERIOD_LENGTH - 1) {
+        if (daysInAdvance >= PERIOD_LENGTH) {
             return new ArrayList<LocalDate>();
         }
+        LocalDate d = LocalDate.now().plusDays(daysInAdvance);
         EnumSet<DayOfWeek> deliveryDays = product.getDeliveryDays();
-        LocalDate d = LocalDate.now();
-        ArrayList<LocalDate> possibleDays = new ArrayList<LocalDate>();
         // Skip the current day as DeliveryService does not account for
         // time of current day
-        for (int i = 0; i < PERIOD_LENGTH; i++) {
+        ArrayList<LocalDate> possibleDays = new ArrayList<LocalDate>();
+        for (int i = daysInAdvance; i < PERIOD_LENGTH; i++) {
             d = d.plusDays(1);
             if (deliveryDays.contains(d.getDayOfWeek()))
                 possibleDays.add(d);
