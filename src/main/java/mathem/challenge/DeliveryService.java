@@ -7,9 +7,9 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -40,6 +40,7 @@ public class DeliveryService {
     // Green days are defined as FRIDAY, SATURDAY and SUNDAY
     static {
         greenDays = EnumSet.range(DayOfWeek.FRIDAY, DayOfWeek.SUNDAY);
+        greenDays.add(DayOfWeek.TUESDAY);
     }
 
     /**
@@ -190,9 +191,9 @@ public class DeliveryService {
         }, Collectors.toSet())).size();
     }
 
-    public LinkedHashMap<UUID, Pair<OffsetDateTime,Boolean>> getSchedule() {
-        LinkedHashMap<UUID, Pair<OffsetDateTime,Boolean>> schedule = 
-        new LinkedHashMap<UUID, Pair<OffsetDateTime,Boolean>>();
+    public List<Pair<OffsetDateTime,Boolean>> getSchedule() {
+        List<Pair<OffsetDateTime,Boolean>> schedule = 
+        new ArrayList<Pair<OffsetDateTime,Boolean>>();
         TreeSet<DeliverySlot> greenDayFirstDeliveries =
         new TreeSet<DeliverySlot>(new Comparator<DeliverySlot>() {
             @Override public int compare(DeliverySlot o1, DeliverySlot o2) {
@@ -213,8 +214,7 @@ public class DeliveryService {
         });
         greenDayFirstDeliveries.addAll(deliveries);
         for (DeliverySlot deliverySlot : greenDayFirstDeliveries) {
-            schedule.put(deliverySlot.productId,
-            new Pair<OffsetDateTime,Boolean>(
+            schedule.add(new Pair<OffsetDateTime,Boolean>(
                 deliverySlot.begin.atOffset(ZoneOffset.UTC),
                 deliverySlot.isGreen)
             );
