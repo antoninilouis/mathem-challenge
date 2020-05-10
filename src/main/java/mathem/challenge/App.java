@@ -8,13 +8,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.LinkedHashMap;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+
+import org.javatuples.Pair;
 
 import mathem.challenge.Product.ProductType;
 
@@ -37,7 +37,9 @@ public class App {
             Product.create("P3", ProductType.NORMAL,
                  EnumSet.allOf(DayOfWeek.class), 0),
             Product.create("P4", ProductType.NORMAL,
-                 EnumSet.allOf(DayOfWeek.class), 0),
+                 EnumSet.allOf(DayOfWeek.class), 6),
+            Product.create("P4", ProductType.NORMAL,
+                 EnumSet.allOf(DayOfWeek.class), 2),
         };
         app.listDeliveryDates("12345", Arrays.asList(products));
     }
@@ -66,23 +68,18 @@ public class App {
             List<LocalDate> possibleDays = possibleDays(product);
             deliveryService.scheduleDelivery(possibleDays, product);
         }
-        LinkedHashMap<UUID, OffsetDateTime> schedule = deliveryService.getSchedule();
+        List<Pair<OffsetDateTime,Boolean>> schedule = 
+        deliveryService.getSchedule();
         JsonArray arr = new JsonArray();
-        schedule.forEach((key, value) -> {
+        schedule.forEach(value -> {
             JsonObject obj = new JsonObject();
             obj.addProperty("postalCode", postcode);
-            obj.addProperty("deliveryDate", value.toString());
-            obj.addProperty("isGreenDelivery", "false");
+            obj.addProperty("deliveryDate", value.getValue0().toString());
+            obj.addProperty("isGreenDelivery", value.getValue1());
             arr.add(obj);
         });
         Gson gson = new Gson();
         System.out.println(gson.toJson(arr));
-
-        /**
-         * - get "isGreen" info from each DeliverySlot (in DeliveryService)
-         * - correct the sorting (earliest to latest to the opposite)
-         * - add tests for the sorting (latest date)
-         */
     }
 
     private static List<Product> getValidProducts(List<Product> products) {
@@ -98,16 +95,17 @@ public class App {
      */
     private static List<LocalDate> possibleDays(Product product) {
         int daysInAdvance = product.getDaysInAdvance();
-        if (daysInAdvance > PERIOD_LENGTH - 1) {
+        // Skip the current day as DeliveryService does not account for
+        // time of current day
+        daysInAdvance = daysInAdvance == 0 ? 1 : daysInAdvance;
+        if (daysInAdvance >= PERIOD_LENGTH) {
             return new ArrayList<LocalDate>();
         }
         EnumSet<DayOfWeek> deliveryDays = product.getDeliveryDays();
-        LocalDate d = LocalDate.now();
         ArrayList<LocalDate> possibleDays = new ArrayList<LocalDate>();
-        // Skip the current day as DeliveryService does not account for
-        // time of current day
-        for (int i = 0; i < PERIOD_LENGTH; i++) {
-            d = d.plusDays(1);
+        LocalDate endOfPeriod = LocalDate.now().plusDays(PERIOD_LENGTH);
+        for (LocalDate d = LocalDate.now().plusDays(daysInAdvance);
+            d.isBefore(endOfPeriod); d = d.plusDays(1)) {
             if (deliveryDays.contains(d.getDayOfWeek()))
                 possibleDays.add(d);
         }
